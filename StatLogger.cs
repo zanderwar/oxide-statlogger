@@ -130,7 +130,7 @@ namespace Oxide.Plugins
         /// <param name="arg"></param>
         void OnPlayerChat(ConsoleSystem.Arg arg)
         {
-            BasePlayer player = (BasePlayer)arg.connection.player;
+            BasePlayer player = (BasePlayer)arg.Connection.player;
             string message = arg.GetString(0, "");
 
             var data = new Dictionary<string, string>
