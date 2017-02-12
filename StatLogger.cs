@@ -41,6 +41,12 @@ namespace Oxide.Plugins
         void Loaded()
         {
             this.sendServerInfo();
+
+            timer.Repeat(60f, 0, () =>
+            {
+                this.sendServerInfo();
+            });
+
             var onlinePlayers = new Dictionary<int, Dictionary<string,string>>();
             var count = 0;
             foreach (BasePlayer player in BasePlayer.activePlayerList)
