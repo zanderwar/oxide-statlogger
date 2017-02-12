@@ -32,6 +32,7 @@ namespace Oxide.Plugins
             { "playerDisconnected", "player-disconnected" },
             { "playerSuicide", "player-suicide" },
             { "playerChat", "player-chat" },
+            { "serverInfo", "server-info" }
         };
 
         /// <summary>
@@ -39,12 +40,13 @@ namespace Oxide.Plugins
         /// </summary>
         void Loaded()
         {
+            this.sendServerInfo();
             var onlinePlayers = new Dictionary<int, Dictionary<string,string>>();
             var count = 0;
             foreach (BasePlayer player in BasePlayer.activePlayerList)
             {
                 onlinePlayers.Add(
-                    count, 
+                    count,
                     new Dictionary<string, string> {
                         { "SteamID",  player.userID.ToString() },
                         { "PlayerName", player.displayName.ToString() },
@@ -94,15 +96,16 @@ namespace Oxide.Plugins
         /// <param name="info"></param>
         void OnEntityDeath(BaseCombatEntity victim, HitInfo info)
         {
+            var target = victim?.ToPlayer();
+            var attacker = info?.Initiator?.ToPlayer();
+            var entity = info?.Initiator;
 
             if (victim?.ToPlayer() != null && info?.Initiator?.ToPlayer() != null)
             {
-                var target = victim.ToPlayer();
-                var attacker = info?.Initiator?.ToPlayer();
-                
+
                 if (target.userID == attacker.userID)
                 {
-                    Puts("Self-Inflicted Death: " + target.displayName);
+                    Puts("Self-Inflicted Death: " + target.displayName + "(" + info.damageTypes.GetMajorityDamageType() + ")");
                     return;
                 }
 
@@ -122,6 +125,8 @@ namespace Oxide.Plugins
 
                 this.sendData(this.getEndpoint("playerKilled"), data, "Sending Kill to Website");
             }
+
+
         }
 
         /// <summary>
@@ -159,7 +164,23 @@ namespace Oxide.Plugins
 
             webrequest.EnqueuePost(endpoint, "data=" + json, (code, response) => printResponse(response), this);
         }
-        
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="json"></param>
+        /// <param name="debugMessage"></param>
+        protected void sendData(string endpoint, string json, string debugMessage = null)
+        {
+            if (this.debug && !String.IsNullOrEmpty(debugMessage))
+            {
+                Puts(debugMessage);
+            }
+
+            webrequest.EnqueuePost(endpoint, "data=" + json, (code, response) => printResponse(response), this);
+        }
+
         /// <summary>
         /// Callback method to print the response to console
         /// </summary>
@@ -172,6 +193,16 @@ namespace Oxide.Plugins
             }
 
             Puts(response);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        protected void sendServerInfo()
+        {
+            string serverinfo = ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), "serverinfo");
+
+            this.sendData(this.getEndpoint("serverInfo"), serverinfo, "Sending Server Info");
         }
 
         /// <summary>
