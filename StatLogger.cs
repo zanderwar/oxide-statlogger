@@ -21,11 +21,17 @@ namespace Oxide.Plugins
         protected bool debug = true;
 
         /// <summary>
+        /// When enabled only death data will be sent, and will be sent to baseEventUrl
+        /// </summary>
+        protected bool eventMode = false;
+
+        /// <summary>
         /// List of endpoints, but contain a baseUrl key
         /// </summary>
         public static Dictionary<string, string> endpoints = new Dictionary<string, string>
         {
             { "baseUrl", "http://dev.scraplands.net/api/" },
+            { "baseEventsUrl", "http://dev.scraplands.net/eventsapi/" },
             { "currentlyOnline", "currently-online" },
             { "playerKilled", "player-killed" },
             { "playerJoined", "player-joined" },
@@ -40,12 +46,21 @@ namespace Oxide.Plugins
         /// </summary>
         void Loaded()
         {
+            cmd.AddConsoleCommand("fakedistancekill", this, "fakeDistanceKill");
+            cmd.AddConsoleCommand("sendserverinfo", this, "sendServerInfo");
+
+            if (this.eventMode) {
+                Puts("You are running in event mode, only kill and player data will be sent to the server");
+                return;
+            }
+
             this.sendServerInfo();
 
             timer.Repeat(60f, 0, () =>
             {
                 this.sendServerInfo();
             });
+
 
             var onlinePlayers = new Dictionary<int, Dictionary<string,string>>();
             var count = 0;
@@ -206,6 +221,10 @@ namespace Oxide.Plugins
         /// </summary>
         protected void sendServerInfo()
         {
+            if (this.eventMode) {
+                return;
+            }
+
             string serverinfo = ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), "serverinfo");
 
             this.sendData(this.getEndpoint("serverInfo"), serverinfo, "Sending Server Info");
@@ -218,7 +237,27 @@ namespace Oxide.Plugins
         /// <returns></returns>
         protected string getEndpoint(string forWhat)
         {
-            return StatLogger.endpoints["baseUrl"] + StatLogger.endpoints[forWhat];
+            string baseUrl = (this.eventMode) ? StatLogger.endpoints["baseEventUrl"] : StatLogger.endpoints["baseUrl"];
+
+            return baseUrl + StatLogger.endpoints[forWhat];
+        }
+
+        /// <summary>
+        /// Fakes a distance kill
+        /// </summary>
+        /// <param name="arg"></param>
+        void fakeDistanceKill(ConsoleSystem.Arg arg)
+        {
+            var data = new Dictionary<string, string> {
+                { "VictimID",  "76561197997942034" },
+                { "KillerID",  "76561198302518503" },
+                { "KillerHP", "100" },
+                { "Weapon", "Semi-Automatic Pistol" },
+                { "Distance", Convert.ToString(arg.GetInt(0,1)) },
+                { "Bone", "head" }
+            };
+
+            this.sendData(this.getEndpoint("playerKilled"), data, "Sending FAKE Kill to Website");
         }
     }
 }
