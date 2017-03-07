@@ -30,8 +30,8 @@ namespace Oxide.Plugins
         /// </summary>
         public static Dictionary<string, string> endpoints = new Dictionary<string, string>
         {
-            { "baseUrl", "http://dev.scraplands.net/api/" },
-            { "baseEventsUrl", "http://dev.scraplands.net/eventsapi/" },
+            { "baseUrl", "http://examplesite.com/api/" },
+            { "baseEventsUrl", "http://examplesite.com/events-api/" },
             { "currentlyOnline", "currently-online" },
             { "playerKilled", "player-killed" },
             { "playerJoined", "player-joined" },
